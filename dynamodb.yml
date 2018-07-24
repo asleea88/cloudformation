@@ -1,0 +1,49 @@
+# stack_name=${NATION}-spooncast-dynamodb-table-unsafe-image-${STAGE}
+#
+# aws cloudformation create-stack --stack-name $stack_name --template-body file://resources/unsafe-table.yml --parameters  ParameterKey=TableNameParam,ParameterValue=${UNSAFE_IMAGE_TABLE} --region $REGION
+# echo "CREATE ${stack_name} IN PROGRESS..."
+#
+# aws cloudformation wait stack-create-complete --stack-name $stack_name --region $REGION
+# echo "CREATE ${stack_name} COMPLETE"
+
+Parameters:
+  TableNameParam:
+    Type: String
+
+Resources:
+  UnSafeImgTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub
+        - ${TableNameParam}
+        - {SERVICE_NAME: !Ref TableNameParam}
+      AttributeDefinitions:
+        - AttributeName: img_key
+          AttributeType: S
+        - AttributeName: risk_level
+          AttributeType: N
+        - AttributeName: event_time
+          AttributeType: S
+      KeySchema:
+        - AttributeName: img_key
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+      GlobalSecondaryIndexes:
+        - IndexName: RiskLevel
+          KeySchema:
+            - AttributeName: risk_level
+              KeyType: HASH
+            - AttributeName: event_time
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - event_time
+              - img_key
+              - risk_level
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
