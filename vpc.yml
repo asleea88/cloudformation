@@ -1,0 +1,181 @@
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Test security group with cloduformation"
+      SecurityGroupIngress:
+        - CidrIp: "10.0.0.0/16"
+          IpProtocol: "tcp"
+          FromPort: 0
+          ToPort: 65535
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 0
+          ToPort: 65535
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: "tcp"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  # Public Subnet
+  IGW:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  AttachIGWToVPC:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref IGW
+
+  PublicSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1a"
+      CidrBlock: "10.0.0.0/20"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+  PublicSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1d"
+      CidrBlock: "10.0.16.0/20"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  PublicSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1c"
+      CidrBlock: "10.0.32.0/20"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  SubnetRouteTableAssociationWithIGW1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTableForIGW
+      SubnetId: !Ref PublicSubnet1
+  SubnetRouteTableAssociationWithIGW2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTableForIGW
+      SubnetId: !Ref PublicSubnet2
+  SubnetRouteTableAssociationWithIGW3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTableForIGW
+      SubnetId: !Ref PublicSubnet3
+
+  RouteTableForIGW:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  RouteToIGW:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref RouteTableForIGW
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref IGW
+
+  # Private Subnet with NAT
+  EIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: "vpc"
+
+  NatGateway:
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  PrivateSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1a"
+      CidrBlock: "10.0.64.0/20"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+  PrivateSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1d"
+      CidrBlock: "10.0.128.0/20"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+  PrivateSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1c"
+      CidrBlock: "10.0.48.0/20"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  SubnetRouteTableAssociationNAT1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTableForNAT
+      SubnetId: !Ref PrivateSubnet1
+  SubnetRouteTableAssociationNAT2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTableForNAT
+      SubnetId: !Ref PrivateSubnet2
+  SubnetRouteTableAssociationNAT3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTableForNAT
+      SubnetId: !Ref PrivateSubnet3
+
+  RouteTableForNAT:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Ref "AWS::StackName"
+
+  RouteToNAT:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref RouteTableForNAT
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref NatGateway
