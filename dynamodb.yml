@@ -14,9 +14,7 @@ Resources:
   UnSafeImgTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub
-        - ${TableNameParam}
-        - {SERVICE_NAME: !Ref TableNameParam}
+      TableName: !Ref TableNameParam
       AttributeDefinitions:
         - AttributeName: img_key
           AttributeType: S

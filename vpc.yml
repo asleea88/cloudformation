@@ -1,4 +1,5 @@
 Resources:
+  # Common VPC and Security group
   VPC:
     Type: "AWS::EC2::VPC"
     Properties:
@@ -33,6 +34,7 @@ Resources:
           Value: !Ref "AWS::StackName"
 
   # Public Subnet
+  # Subnet + IGW + RouteTable
   IGW:
     Type: "AWS::EC2::InternetGateway"
     Properties:
@@ -64,7 +66,6 @@ Resources:
       Tags:
         - Key: "Name"
           Value: !Ref "AWS::StackName"
-
   PublicSubnet3:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -107,6 +108,7 @@ Resources:
       GatewayId: !Ref IGW
 
   # Private Subnet with NAT
+  # Subnet + NAT + RouteTable
   EIP:
     Type: "AWS::EC2::EIP"
     Properties:
