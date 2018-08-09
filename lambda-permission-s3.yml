@@ -1,0 +1,12 @@
+# Existing S3 permission
+Resources:
+  LambdaPermissionS3:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName:
+        Ref: ModerationLambdaFunction
+      Principal: "s3.amazonaws.com"
+      Action: "lambda:InvokeFunction"
+      SourceAccount:
+        Ref: "AWS::AccountId"
+      SourceArn: "arn:aws:s3:::${env:IMG_BUCKET}"

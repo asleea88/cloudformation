@@ -1,0 +1,17 @@
+Resources:
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Statistic: Sum
+      Period: '60'
+      Dimensions:
+        - Name: "FunctionName"
+          Value:
+            Ref: ModerationLambdaFunction
+      EvaluationPeriods: '1'
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - ${env:SNS_SUB_ARN}

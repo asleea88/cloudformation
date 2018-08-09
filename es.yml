@@ -1,0 +1,47 @@
+# aws cloudfrmation create-stack --stack-name estest --template-body file://resources/elasticsearch.yml --region ap-northeast-1 --parameters ParameterKey=DomainName,ParameterValue=test-service-name
+
+Parameters:
+  DomainName:
+    Type: String
+  RekogIamArn:
+    Type: String
+
+Resources:
+  ES:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      DomainName: !Ref DomainName
+      ElasticsearchClusterConfig:
+        "InstanceType": "m3.medium.elasticsearch"
+        "InstanceCount": 2
+        "ZoneAwarenessEnabled": true
+        cessPolicies:
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  !Ref "RekogIamArn"
+                ]
+              },
+              "Action": [
+                "es:*"
+              ],
+              "Resource": {
+                "Fn::Sub": ["arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${DomainName}/*", {"DomainName": {"Ref": "DomainName"}}]
+              }
+            }
+          ]
+        }
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 10
+        VolumeType: "gp2"
+      ElasticsearchVersion: "6.2"
+
+Outputs:
+  ESEndpoint:
+    Description: "Information"
+    Value: !GetAtt 'ES.DomainEndpoint'
